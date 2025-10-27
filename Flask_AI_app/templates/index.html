@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CIFAR-10 Image Classifier</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8fafc;
+      text-align: center;
+      padding: 40px;
+    }
+    h1 {
+      color: #333;
+    }
+    .preview {
+      margin-top: 20px;
+    }
+    img {
+      max-width: 224px;
+      border-radius: 10px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>CIFAR-10 Classifier (MobileNetV2)</h1>
+
+  <input type="file" id="fileInput" accept="image/*" />
+  <br /><br />
+  <button onclick="uploadAndPredict()">Predict</button>
+
+  <div class="preview">
+    <img id="preview" src="" alt="Preview" style="display:none;" />
+  </div>
+
+  <p id="result"></p>
+
+  <script>
+    async function uploadAndPredict() {
+      const fileInput = document.getElementById("fileInput");
+      const file = fileInput.files[0];
+
+      if (!file) {
+        alert("Please select an image first!");
+        return;
+      }
+
+      // Show preview
+      const preview = document.getElementById("preview");
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = "block";
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const response = await fetch("/predict", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server returned ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        document.getElementById("result").innerText =
+          `Prediction: ${data.class} (Confidence: ${(data.confidence * 100).toFixed(2)}%)`;
+      } catch (err) {
+        console.error("Prediction failed:", err);
+        document.getElementById("result").innerText =
+          "Prediction failed. Check console for details.";
+      }
+    }
+  </script>
+</body>
+</html>
