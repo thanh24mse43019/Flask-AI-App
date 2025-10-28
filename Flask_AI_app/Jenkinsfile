@@ -1,0 +1,44 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = "your_dockerhub_username/cifar10-flask"
+        DOCKER_TAG = "latest"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build Docker image') {
+            steps {
+                script {
+                    sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                }
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                withCredentials([string(credentialsId: 'dockerhub-token', variable: 'DOCKER_TOKEN')]) {
+                    sh """
+                        echo "$DOCKER_TOKEN" | docker login -u your_dockerhub_username --password-stdin
+                        docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
+                    """
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                script {
+                    // Optional: run container on your Jenkins host or target server
+                    sh "docker run -d -p 5000:5000 --name cifar10-flask ${DOCKER_IMAGE}:${DOCKER_TAG} || true"
+                }
+            }
+        }
+    }
+}
