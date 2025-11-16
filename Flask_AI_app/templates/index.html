@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CIFAR-10 Image Classifier</title>
+ <style>
+  body {
+    font-family: "Inter", Arial, sans-serif;
+    background: linear-gradient(135deg, #eef2f3, #dfe9f3);
+    text-align: center;
+    padding: 40px;
+    color: #333;
+  }
+
+  h1 {
+    font-size: 32px;
+    margin-bottom: 30px;
+    font-weight: 700;
+    color: #222;
+  }
+
+  .container {
+    background: white;
+    max-width: 500px;
+    margin: auto;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  }
+
+  input[type="file"] {
+    margin: 20px 0;
+    padding: 12px;
+    background: #f9fafb;
+    border: 2px dashed #cbd5e1;
+    border-radius: 10px;
+    cursor: pointer;
+    width: 100%;
+  }
+
+  button {
+    background: #2563eb;
+    color: white;
+    padding: 12px 24px;
+    font-size: 16px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.2s ease;
+  }
+  button:hover {
+    background: #1d4ed8;
+  }
+
+  .preview img {
+    margin-top: 20px;
+    max-width: 250px;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  }
+
+  #result {
+    margin-top: 20px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #111827;
+  }
+</style>
+
+  </style>
+</head>
+<body>
+  <h1>CIFAR-10 Classifier (MobileNetV2)</h1>
+
+  <input type="file" id="fileInput" accept="image/*" />
+  <br /><br />
+  <button onclick="uploadAndPredict()">Predict</button>
+
+  <div class="preview">
+    <img id="preview" src="" alt="Preview" style="display:none;" />
+  </div>
+
+  <p id="result"></p>
+
+  <script>
+    async function uploadAndPredict() {
+      const fileInput = document.getElementById("fileInput");
+      const file = fileInput.files[0];
+
+      if (!file) {
+        alert("Please select an image first!");
+        return;
+      }
+
+      // Show preview
+      const preview = document.getElementById("preview");
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = "block";
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const response = await fetch("/predict", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server returned ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        document.getElementById("result").innerText =
+          `Prediction: ${data.class} (Confidence: ${(data.confidence * 100).toFixed(2)}%)`;
+      } catch (err) {
+        console.error("Prediction failed:", err);
+        document.getElementById("result").innerText =
+          "Prediction failed. Check console for details.";
+      }
+    }
+  </script>
+</body>
+</html>
